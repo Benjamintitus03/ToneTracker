@@ -10,6 +10,11 @@
 
 void Initialize_Clock_System();
 void DRAW_WELCOME(Graphics_Context *context);
+//global variables
+//MENU STATE
+volatile unsigned int menu_rounds = 1;
+volatile unsigned char menu_needs_REDRAW = 1;
+
 
 void main(void) {
     // Stop the watchdog timer (critical for all MSP430 code)
