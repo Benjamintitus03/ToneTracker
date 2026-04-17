@@ -12,6 +12,8 @@ void Initialize_Clock_System(void);
 void display_idle(Graphics_Context *context);
 void display_startup(Graphics_Context *context);
 void display_menu_state(Graphics_Context *context);
+void display_sequence_state(Graphics_Context *context, unsigned int round_num)
+
 typedef enum {
     STATE_IDLE,
     STATE_STARTUP
