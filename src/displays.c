@@ -1,3 +1,27 @@
+//prototypes
+void Initialize_Clock_System(void);
+void display_idle(Graphics_Context *context);
+void display_startup(Graphics_Context *context);
+void display_menu_state(Graphics_Context *context);
+void display_sequence_state(Graphics_Context *context, unsigned int current_round)
+void draw_music_note(Graphics_Context *context, int x, int y);
+void display_compare_state(Graphics_Context *context,
+                           unsigned int slot1,
+                           unsigned int slot2,
+                           unsigned int preview_dir,
+                           unsigned int round_num);
+volatile unsigned int total_rounds;      // rounds chosen in menu state, 1-20
+volatile unsigned int current_round = 1;     // current round
+
+//global variables
+Graphics_Context g_sContext;
+//MENU STATE
+volatile system_state_t current_state = STATE_WELCOME;
+volatile unsigned int menu_rounds = 1;
+volatile unsigned char menu_needs_redraw = 1;
+volatile unsigned int total_rounds;      // rounds chosen in menu state, 1-20
+volatile unsigned int current_round = 1;     // current round
+
 //WELCOME SCREEN AKA IDLE STATE
 void display_idle(Graphics_Context *context){
   Graphics_clearDisplay(context);
@@ -111,6 +135,103 @@ void draw_music_note(Graphics_Context *context, int x, int y)
     Graphics_drawLine(context, x + 3, y - 11, x + 8, y - 8);
 }
 
+void display_compare_state(Graphics_Context *context,
+                           unsigned int slot1,
+                           unsigned int slot2,
+                           unsigned int preview_dir,
+                           unsigned int round_num)
+{
+    char buf[3];
+
+    // x positions for the two compare slots
+    int slot1_x = 44;
+    int slot2_x = 84;
+
+    // y position for the arrows
+    int arrow_y = 68;
+
+    // underline heights
+    int underline_y_high = 86;   // still picking first arrow
+    int underline_y_low  = 92;   // first arrow locked in, now picking second
+
+    Graphics_clearDisplay(context);
+
+    // title
+    Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
+                                AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+
+    // screen label
+    Graphics_drawStringCentered(context, (int8_t *)"COMPARE NOTES!",
+                                AUTO_STRING_LENGTH, 64, 35, OPAQUE_TEXT);
+
+    // ---------------------------------------------------------
+    // draw slot 1
+    // if slot1 already has a confirmed direction, draw that
+    // otherwise draw the current preview direction there
+    // ---------------------------------------------------------
+    if (slot1 != DIR_NONE) {
+        draw_direction_arrow(context, slot1_x, arrow_y, slot1);
+    } else {
+        draw_direction_arrow(context, slot1_x, arrow_y, preview_dir);
+    }
+
+    // ---------------------------------------------------------
+    // draw slot 2
+    // only draw something in slot 2 once slot1 is already chosen
+    // if slot2 is confirmed, draw that
+    // if slot2 is not confirmed yet but slot1 is done, draw preview
+    // ---------------------------------------------------------
+    if (slot1 != DIR_NONE) {
+        if (slot2 != DIR_NONE) {
+            draw_direction_arrow(context, slot2_x, arrow_y, slot2);
+        } else {
+            draw_direction_arrow(context, slot2_x, arrow_y, preview_dir);
+        }
+    }
+
+    // ---------------------------------------------------------
+    // underline logic
+    // if slot1 is still empty, underline slot1 a little higher
+    // once slot1 is selected, move to slot2 and drop underline lower
+    // ---------------------------------------------------------
+    if (slot1 == DIR_NONE) {
+        Graphics_drawLine(context, slot1_x - 8, underline_y_high,
+                                   slot1_x + 8, underline_y_high);
+    } else if (slot2 == DIR_NONE) {
+        Graphics_drawLine(context, slot2_x - 8, underline_y_low,
+                                   slot2_x + 8, underline_y_low);
+    }
+
+    // ---------------------------------------------------------
+    // round number display
+    // converts 1-20 into a string without snprintf
+    // ---------------------------------------------------------
+    buf[0] = (round_num / 10) + '0';
+    buf[1] = (round_num % 10) + '0';
+    buf[2] = '\0';
+
+    // for 1-9, remove the leading zero
+    if (round_num < 10) {
+        buf[0] = buf[1];
+        buf[1] = '\0';
+    }
+
+    Graphics_drawStringCentered(context, (int8_t *)"ROUND",
+                                AUTO_STRING_LENGTH, 52, 105, OPAQUE_TEXT);
+
+    Graphics_drawStringCentered(context, (int8_t *)buf,
+                                AUTO_STRING_LENGTH, 82, 105, OPAQUE_TEXT);
+
+    // bottom controls
+    Graphics_drawStringCentered(context, (int8_t *)"S1:CLEAR",
+                                AUTO_STRING_LENGTH, 30, 118, OPAQUE_TEXT);
+
+    Graphics_drawStringCentered(context, (int8_t *)"S2:CONFIRM",
+                                AUTO_STRING_LENGTH, 95, 118, OPAQUE_TEXT);
+
+    Graphics_flushBuffer(context);
+}
+
 void Initialize_Clock_System() {
   // DCO frequency = 16 MHz
   // MCLK = fDCO/1 = 16 MHz
@@ -132,3 +253,31 @@ void Initialize_Clock_System() {
   return;
 }
 
+void draw_big_up_arrow(Graphics_Context *context, int x, int y)
+{
+    // shaft
+    Graphics_drawLine(context, x, y, x, y + 18);
+
+    // arrow head
+    Graphics_drawLine(context, x, y, x - 6, y + 6);
+    Graphics_drawLine(context, x, y, x + 6, y + 6);
+}
+
+void draw_big_down_arrow(Graphics_Context *context, int x, int y)
+{
+    // shaft
+    Graphics_drawLine(context, x, y, x, y - 18);
+
+    // arrow head
+    Graphics_drawLine(context, x, y, x - 6, y - 6);
+    Graphics_drawLine(context, x, y, x + 6, y - 6);
+}
+void draw_direction_arrow(Graphics_Context *context, int x, int y, unsigned int dir)
+{
+    if (dir == DIR_UP) {
+        draw_big_up_arrow(context, x, y);
+    }
+    else if (dir == DIR_DOWN) {
+        draw_big_down_arrow(context, x, y);
+    }
+}
