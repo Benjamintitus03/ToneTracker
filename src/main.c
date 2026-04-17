@@ -12,20 +12,19 @@ void Initialize_Clock_System(void);
 void display_idle(Graphics_Context *context);
 void display_startup(Graphics_Context *context);
 void display_menu_state(Graphics_Context *context);
-void display_sequence_state(Graphics_Context *context, unsigned int round_num)
+void display_sequence_state(Graphics_Context *context, unsigned int current_round)
+void draw_music_note(Graphics_Context *context, int x, int y);
+volatile unsigned int total_rounds;      // rounds chosen in menu state, 1-20
+volatile unsigned int current_round = 1;     // current round
 
-typedef enum {
-    STATE_IDLE,
-    STATE_STARTUP
-    STATE_MENU,
-    STATE_TRACKING
-} system_state_t;
 //global variables
 Graphics_Context g_sContext;
 //MENU STATE
 volatile system_state_t current_state = STATE_WELCOME;
 volatile unsigned int menu_rounds = 1;
 volatile unsigned char menu_needs_redraw = 1;
+volatile unsigned int total_rounds;      // rounds chosen in menu state, 1-20
+volatile unsigned int current_round = 1;     // current round
 
 void main(void) {
     // Stop the watchdog timer (critical for all MSP430 code)
