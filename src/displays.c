@@ -181,24 +181,18 @@ void display_compare_state(Graphics_Context *context,
     // screen label
     Graphics_drawStringCentered(context, (int8_t *)"COMPARE NOTES!",
                                 AUTO_STRING_LENGTH, 64, 35, OPAQUE_TEXT);
-
-    // ---------------------------------------------------------
     // draw slot 1
     // if slot1 already has a confirmed direction, draw that
     // otherwise draw the current preview direction there
-    // ---------------------------------------------------------
     if (slot1 != DIR_NONE) {
         draw_direction_arrow(context, slot1_x, arrow_y, slot1);
     } else {
         draw_direction_arrow(context, slot1_x, arrow_y, preview_dir);
     }
-
-    // ---------------------------------------------------------
     // draw slot 2
     // only draw something in slot 2 once slot1 is already chosen
     // if slot2 is confirmed, draw that
     // if slot2 is not confirmed yet but slot1 is done, draw preview
-    // ---------------------------------------------------------
     if (slot1 != DIR_NONE) {
         if (slot2 != DIR_NONE) {
             draw_direction_arrow(context, slot2_x, arrow_y, slot2);
@@ -207,11 +201,9 @@ void display_compare_state(Graphics_Context *context,
         }
     }
 
-    // ---------------------------------------------------------
     // underline logic
     // if slot1 is still empty, underline slot1 a little higher
     // once slot1 is selected, move to slot2 and drop underline lower
-    // ---------------------------------------------------------
     if (slot1 == DIR_NONE) {
         Graphics_drawLine(context, slot1_x - 8, underline_y_high,
                                    slot1_x + 8, underline_y_high);
@@ -219,11 +211,8 @@ void display_compare_state(Graphics_Context *context,
         Graphics_drawLine(context, slot2_x - 8, underline_y_low,
                                    slot2_x + 8, underline_y_low);
     }
-
-    // ---------------------------------------------------------
     // round number display
     // converts 1-20 into a string without snprintf
-    // ---------------------------------------------------------
     buf[0] = (round_num / 10) + '0';
     buf[1] = (round_num % 10) + '0';
     buf[2] = '\0';
@@ -277,30 +266,17 @@ void display_final_score_state(Graphics_Context *context,
     char buf[6]; // enough for "20/20"
 
     Graphics_clearDisplay(context);
-
-    // ---------------------------------------------------------
     // TITLE
-    // ---------------------------------------------------------
     Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
                                 AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
-
-    // ---------------------------------------------------------
     // MUSIC NOTES (centered cluster)
-    // ---------------------------------------------------------
     draw_music_note(context, 44, 28);
     draw_music_note(context, 64, 28);
     draw_music_note(context, 84, 28);
-
-    // ---------------------------------------------------------
-    // YOU SCORED
-    // ---------------------------------------------------------
     Graphics_drawStringCentered(context, (int8_t *)"YOU SCORED",
                                 AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
-
-    // ---------------------------------------------------------
     // SCORE FORMAT: x/ROUNDS
-    // ---------------------------------------------------------
-    // build string manually (no snprintf)
+    // build string manually (snprintf wasnt allowed:/)
 
     // tens digit of score
     if (score >= 10) {
@@ -320,10 +296,9 @@ void display_final_score_state(Graphics_Context *context,
 
     Graphics_drawStringCentered(context, (int8_t *)buf,
                                 AUTO_STRING_LENGTH, 64, 70, OPAQUE_TEXT);
-
-    // ---------------------------------------------------------
     // RESTART INSTRUCTION
-    // ---------------------------------------------------------
+  //I dont want S1 TO GO TO CONFIRM_RESTART_sTATE it should auto go to idle or start up
+
     Graphics_drawStringCentered(context, (int8_t *)"Press S1 To Restart",
                                 AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
 
@@ -337,42 +312,31 @@ void display_confirm_restart_state(Graphics_Context *context, unsigned int selec
     int underline_y = 92;
 
     Graphics_clearDisplay(context);
-
-
     // title
-
     Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
                                 AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
 
-    // ---------------------------------------------------------
     // 3 music notes
-    // ---------------------------------------------------------
     draw_music_note(context, 44, 28);
     draw_music_note(context, 64, 28);
     draw_music_note(context, 84, 28);
-
-    // ---------------------------------------------------------
     // restart prompt
-    // ---------------------------------------------------------
     Graphics_drawStringCentered(context, (int8_t *)"RESTART GAME?",
                                 AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
 
     Graphics_drawStringCentered(context, (int8_t *)"Progress will be LOST",
                                 AUTO_STRING_LENGTH, 64, 62, OPAQUE_TEXT);
-
-    // ---------------------------------------------------------
     // choices
-    // ---------------------------------------------------------
+
     Graphics_drawStringCentered(context, (int8_t *)"YES",
                                 AUTO_STRING_LENGTH, yes_x, choice_y, OPAQUE_TEXT);
 
     Graphics_drawStringCentered(context, (int8_t *)"NO",
                                 AUTO_STRING_LENGTH, no_x, choice_y, OPAQUE_TEXT);
 
-    // ---------------------------------------------------------
+
     // underline active selection
     // joystick will toggle this between yes and no
-    // ---------------------------------------------------------
     if (selection == RESTART_YES) {
         Graphics_drawLine(context, yes_x - 10, underline_y,
                                    yes_x + 10, underline_y);
@@ -381,9 +345,6 @@ void display_confirm_restart_state(Graphics_Context *context, unsigned int selec
                                    no_x + 8, underline_y);
     }
 
-    // ---------------------------------------------------------
-    // confirm instruction
-    // ---------------------------------------------------------
     Graphics_drawStringCentered(context, (int8_t *)"S2:CONFIRM SELECTION",
                                 AUTO_STRING_LENGTH, 64, 112, OPAQUE_TEXT);
 
