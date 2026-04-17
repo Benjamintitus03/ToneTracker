@@ -1,6 +1,6 @@
 #include <msp430.h>
 #include <stdlib.h>
-
+unsigned int random_notes_dont_repeat(unsigned int prev_note);
 // Note frequencies: C4, D4, E4, F4, G4, A4, B4
 const unsigned int scale[7] = {1915, 1706, 1519, 1432, 1275, 1136, 1012};
 int total_rounds = 5;
@@ -42,23 +42,23 @@ void roll_new_notes(void) {
     // Select 5 or 10 rounds based on joystick position
     total_rounds = (joy_val > 2048) ? 10 : 5;
 
-    srand(TA0R); // Seed with timer count
-    current_notes[0] = scale[(unsigned int)(rand() % 7)];
-    current_notes[1] = scale[(unsigned int)(rand() % 7)];
-    current_notes[2] = scale[(unsigned int)(rand() % 7)];
+        current_notes[0] = scale[rand() % 7];
+        current_notes[1] = random_notes_dont_repeat(current_notes[0]);
+        current_notes[2] = random_notes_dont_repeat(current_notes[1]);
 }
 
 void main(void) {
-    int i; 
+    int i;
 
     setup_hardware();
+    srand(TA0R); // Seed with timer count
     __enable_interrupt();
 
     roll_new_notes();
 
     while (1) {
         // Play the 3-note sequence
-        for (i = 0; i < 3; i++) { 
+        for (i = 0; i < 3; i++) {
             TA0CCR0 = current_notes[i];
             TA0CTL = TASSEL_2 | MC_1 | TACLR;
             __delay_cycles(500000);           // Play for 0.5s
@@ -77,4 +77,15 @@ void main(void) {
 #pragma vector = TIMER0_A0_VECTOR
 __interrupt void Buzzer_ISR (void) {
     P2OUT ^= BIT7;
+}
+
+unsigned int random_notes_dont_repeat(unsigned int prev_note)
+{
+    unsigned int new_note;
+
+    do {
+        new_note = scale[rand() % 7];
+    } while (new_note == prev_note);
+
+    return new_note;
 }
