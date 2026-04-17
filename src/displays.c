@@ -63,6 +63,53 @@ void display_menu_state(Graphics_Context *context)
     Graphics_drawStringCentered(context, (int8_t *)"PRESS S2 TO CONFIRM", AUTO_STRING_LENGTH, 64, 110, OPAQUE_TEXT);
     Graphics_flushBuffer(context);
 }
+void display_sequence_state(Graphics_Context *context, unsigned int round_num)
+{
+    char buf[3];
+
+    Graphics_clearDisplay(context);
+
+    Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
+                                AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+
+    Graphics_drawStringCentered(context, (int8_t *)"LISTEN CLOSELY!",
+                                AUTO_STRING_LENGTH, 64, 40, OPAQUE_TEXT);
+
+    //MUSIC NOTES:)
+    draw_music_note(context, 34, 65);
+    draw_music_note(context, 64, 65);
+    draw_music_note(context, 94, 65);
+
+    buf[0] = (round_num / 10) + '0';
+    buf[1] = (round_num % 10) + '0';
+    buf[2] = '\0';
+
+    if (round_num < 10) {
+        buf[0] = buf[1];
+        buf[1] = '\0';
+    }
+
+    Graphics_drawStringCentered(context, (int8_t *)"Round",
+                                AUTO_STRING_LENGTH, 50, 90, OPAQUE_TEXT);
+
+    Graphics_drawStringCentered(context, (int8_t *)buf,
+                                AUTO_STRING_LENGTH, 78, 90, OPAQUE_TEXT);
+
+    Graphics_flushBuffer(context);
+}
+
+void draw_music_note(Graphics_Context *context, int x, int y)
+{
+    // note head
+    Graphics_fillCircle(context, x, y, 2);
+
+    // stem
+    Graphics_drawLine(context, x + 2, y, x + 2, y - 12);
+
+    // flag
+    Graphics_drawLine(context, x + 3, y - 12, x + 8, y - 9);
+    Graphics_drawLine(context, x + 3, y - 11, x + 8, y - 8);
+}
 
 void Initialize_Clock_System() {
   // DCO frequency = 16 MHz
