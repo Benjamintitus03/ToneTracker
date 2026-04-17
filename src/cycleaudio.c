@@ -1,60 +1,88 @@
 #include <msp430fr6989.h>
+#include "Grlib/grlib/grlib.h"
+#include "LcdDriver/lcd_driver.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-// Array of Half-Period Timer Ticks for C4 through B4
-// Calculated as: (1,000,000 Hz / Frequency) / 2
-const unsigned int notes[7] = {
-    1915, // C (261 Hz)
-    1706, // D (293 Hz)
-    1519, // E (329 Hz)
-    1432, // F (349 Hz)
-    1275, // G (392 Hz)
-    1136, // A (440 Hz)
-    1012  // B (494 Hz)
-};
+const unsigned int scale[7] = {1915, 1706, 1519, 1432, 1275, 1136, 1012};
+unsigned int current_notes[3];
+Graphics_Context g_sContext;
 
-void main(void) {
-    // 1. Stop Watchdog & Unlock Pins
+void setup_hardware(void) {
     WDTCTL = WDTPW | WDTHOLD;
     PM5CTL0 &= ~LOCKLPM5;
 
-    // 2. Setup P2.7 (Buzzer) as GPIO Output
-    P2DIR |= BIT7;
-    P2OUT &= ~BIT7;
+    P2DIR |= BIT7; // Buzzer
 
-    // 3. Setup Timer A0 for Background Interrupts
-    // TASSEL_2 = SMCLK (1MHz), MC_1 = Up mode
+    // Configure S1 (P1.1) as Input with Pull-up Resistor
+    P1DIR &= ~BIT1;
+    P1REN |= BIT1;
+    P1OUT |= BIT1;
+
+    // Timer A0 for Buzzer
     TA0CTL = TASSEL_2 | MC_1 | TACLR;
-    TA0CCTL0 = CCIE; // Enable Timer A0 Interrupt
+    TA0CCTL0 = CCIE;
+}
 
-    // 4. Enable Global Interrupts (turns on the background system)
+void roll_notes(void) {
+    srand(TA0R);
+    current_notes[0] = scale[(unsigned int)(rand() % 7)];
+    current_notes[1] = scale[(unsigned int)(rand() % 7)];
+    current_notes[2] = scale[(unsigned int)(rand() % 7)];
+}
+
+void main(void) {
+    Initialize_Clock_System();
+    setup_hardware();
+
+    Crystalfontz128x128_Init();
+    Crystalfontz128x128_SetOrientation(0);
+    Graphics_initContext(&g_sContext, &g_sCrystalfontz128x128);
+    Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
+    GrContextFontSet(&g_sContext, &g_sFontFixed6x8);
+    Graphics_clearDisplay(&g_sContext);
+
+    Graphics_drawStringCentered(&g_sContext, "TONE TRACKER", AUTO_STRING_LENGTH, 64, 30, OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext, "Press S1 to Start", AUTO_STRING_LENGTH, 64, 70, OPAQUE_TEXT);
+
+    // Stall until S1 is pressed (P1IN & BIT1 will be 0 when pressed)
+    while (P1IN & BIT1);
+
     __enable_interrupt();
 
-    int current_note = 0;
-
-    // 5. The Main Loop
     while (1) {
-        // Set the background timer to the current pitch
-        TA0CCR0 = notes[current_note];
+        roll_notes();
+        Graphics_clearDisplay(&g_sContext);
+        Graphics_drawStringCentered(&g_sContext, "Listening...", AUTO_STRING_LENGTH, 64, 64, OPAQUE_TEXT);
 
-        // Let the note play for 0.5 seconds
-        // (The CPU just waits here while the interrupt makes the sound)
-        __delay_cycles(500000);
-
-        // Add a tiny  silence 
-        TA0CTL = MC_0;         // Stop the timer
-        P2OUT &= ~BIT7;        // Ensure buzzer is forced off
-        __delay_cycles(50000); // 50 milliseconds of silence
-        TA0CTL = TASSEL_2 | MC_1 | TACLR; // Restart the timer
-
-        // Move to the next note, loop back to 0 if we hit the end
-        current_note++;
-        if (current_note > 6) {
-            current_note = 0;
+        int i;
+        for (i = 0; i < 3; i++) {
+            TA0CCR0 = current_notes[i];
+            TA0CTL = TASSEL_2 | MC_1 | TACLR;
+            __delay_cycles(8000000); // 0.5s play
+            TA0CTL = MC_0;
+            P2OUT &= ~BIT7;
+            __delay_cycles(1600000); // Gap
         }
+
+        Graphics_clearDisplay(&g_sContext);
+        Graphics_drawStringCentered(&g_sContext, "Sequence Done!", AUTO_STRING_LENGTH, 64, 64, OPAQUE_TEXT);
+
+        // Brief pause before next round
+        __delay_cycles(32000000);
     }
 }
 
 #pragma vector = TIMER0_A0_VECTOR
-__interrupt void Timer_A (void) {
-    P2OUT ^= BIT7; // Toggle the buzzer pin to create the sound wave
+__interrupt void Buzzer_ISR (void) {
+    P2OUT ^= BIT7;
+}
+
+void Initialize_Clock_System() {
+    FRCTL0 = FRCTLPW | NWAITS_1;
+    CSCTL0 = CSKEY;
+    CSCTL1 &= ~DCOFSEL_7; CSCTL1 |= DCOFSEL_4 | DCORSEL;
+    CSCTL3 &= ~(DIVS2|DIVS1|DIVS0|DIVM2|DIVM1|DIVM0);
+    CSCTL0_H = 0;
 }
