@@ -1,20 +1,38 @@
+#define DIR_UP   1
+#define DIR_DOWN 0
+#define DIR_NONE 2
+#define RESULT_CORRECT 1
+#define RESULT_WRONG   0
+#define RESTART_YES 0
+#define RESTART_NO  1
+
+Graphics_Context g_sContext;        // Declare a graphic library context GLOBALLY
 //prototypes
 void Initialize_Clock_System(void);
-void display_idle(Graphics_Context *context);
-void display_startup(Graphics_Context *context);
+void display_idle_state(Graphics_Context *context);
+void display_startup_state(Graphics_Context *context);
 void display_menu_state(Graphics_Context *context);
 void display_sequence_state(Graphics_Context *context, unsigned int current_round)
-void draw_music_note(Graphics_Context *context, int x, int y);
 void display_compare_state(Graphics_Context *context,
                            unsigned int slot1,
                            unsigned int slot2,
                            unsigned int preview_dir,
                            unsigned int round_num);
+void display_round_feedback_state(Graphics_Context *context, unsigned int result);
+void display_final_score_state(Graphics_Context *context,
+                               unsigned int score,
+                               unsigned int total_rounds);
+void display_confirm_restart_state(Graphics_Context *context, unsigned int selection);
+//DESIGNS
+void draw_big_checkmark(Graphics_Context *context, int x, int y);
+void draw_big_x(Graphics_Context *context, int x, int y);
+void draw_music_note(Graphics_Context *context, int x, int y);
+void draw_direction_arrow(Graphics_Context *context, int x, int y, unsigned int dir);
+void draw_big_down_arrow(Graphics_Context *context, int x, int y);
+void draw_big_up_arrow(Graphics_Context *context, int x, int y);
 volatile unsigned int total_rounds;      // rounds chosen in menu state, 1-20
 volatile unsigned int current_round = 1;     // current round
 
-//global variables
-Graphics_Context g_sContext;
 //MENU STATE
 volatile system_state_t current_state = STATE_WELCOME;
 volatile unsigned int menu_rounds = 1;
@@ -23,7 +41,7 @@ volatile unsigned int total_rounds;      // rounds chosen in menu state, 1-20
 volatile unsigned int current_round = 1;     // current round
 
 //WELCOME SCREEN AKA IDLE STATE
-void display_idle(Graphics_Context *context){
+void display_idle_state(Graphics_Context *context){
   Graphics_clearDisplay(context);
     // Set background and foreground colors
     Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
@@ -38,7 +56,7 @@ void display_idle(Graphics_Context *context){
     Graphics_drawStringCentered(&g_sContext, "PRESS S1 TO PLAY", AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
 }
 // MUSIC PLAYS FOR 5 SECONDS IN THIS STATE
-void display_startup(Graphics_Context *context){
+void display_startup_state(Graphics_Context *context){
   Graphics_clearDisplay(context);
     // Set background and foreground colors
     Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
@@ -231,7 +249,146 @@ void display_compare_state(Graphics_Context *context,
 
     Graphics_flushBuffer(context);
 }
+void display_round_feedback_state(Graphics_Context *context, unsigned int result){
+    Graphics_clearDisplay(context);
 
+        // title
+        Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
+                                    AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+
+        // 3 centered music notes under title
+        draw_music_note(context, 42, 32);
+        draw_music_note(context, 64, 32);
+        draw_music_note(context, 86, 32);
+
+        // big result symbol in middle
+        if (result == RESULT_CORRECT) {
+            draw_big_checkmark(context, 64, 78);
+        } else {
+            draw_big_x(context, 64, 78);
+        }
+
+        Graphics_flushBuffer(context);
+}
+void display_final_score_state(Graphics_Context *context,
+                               unsigned int score,
+                               unsigned int total_rounds)
+{
+    char buf[6]; // enough for "20/20"
+
+    Graphics_clearDisplay(context);
+
+    // ---------------------------------------------------------
+    // TITLE
+    // ---------------------------------------------------------
+    Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
+                                AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+
+    // ---------------------------------------------------------
+    // MUSIC NOTES (centered cluster)
+    // ---------------------------------------------------------
+    draw_music_note(context, 44, 28);
+    draw_music_note(context, 64, 28);
+    draw_music_note(context, 84, 28);
+
+    // ---------------------------------------------------------
+    // YOU SCORED
+    // ---------------------------------------------------------
+    Graphics_drawStringCentered(context, (int8_t *)"YOU SCORED",
+                                AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
+
+    // ---------------------------------------------------------
+    // SCORE FORMAT: x/ROUNDS
+    // ---------------------------------------------------------
+    // build string manually (no snprintf)
+
+    // tens digit of score
+    if (score >= 10) {
+        buf[0] = (score / 10) + '0';
+        buf[1] = (score % 10) + '0';
+        buf[2] = '/';
+        buf[3] = (total_rounds / 10) + '0';
+        buf[4] = (total_rounds % 10) + '0';
+        buf[5] = '\0';
+    } else {
+        buf[0] = score + '0';
+        buf[1] = '/';
+        buf[2] = (total_rounds / 10) + '0';
+        buf[3] = (total_rounds % 10) + '0';
+        buf[4] = '\0';
+    }
+
+    Graphics_drawStringCentered(context, (int8_t *)buf,
+                                AUTO_STRING_LENGTH, 64, 70, OPAQUE_TEXT);
+
+    // ---------------------------------------------------------
+    // RESTART INSTRUCTION
+    // ---------------------------------------------------------
+    Graphics_drawStringCentered(context, (int8_t *)"Press S1 To Restart",
+                                AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
+
+    Graphics_flushBuffer(context);
+}
+void display_confirm_restart_state(Graphics_Context *context, unsigned int selection)
+{
+    int yes_x = 24;
+    int no_x  = 96;
+    int choice_y = 78;
+    int underline_y = 92;
+
+    Graphics_clearDisplay(context);
+
+
+    // title
+
+    Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
+                                AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+
+    // ---------------------------------------------------------
+    // 3 music notes
+    // ---------------------------------------------------------
+    draw_music_note(context, 44, 28);
+    draw_music_note(context, 64, 28);
+    draw_music_note(context, 84, 28);
+
+    // ---------------------------------------------------------
+    // restart prompt
+    // ---------------------------------------------------------
+    Graphics_drawStringCentered(context, (int8_t *)"RESTART GAME?",
+                                AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
+
+    Graphics_drawStringCentered(context, (int8_t *)"Progress will be LOST",
+                                AUTO_STRING_LENGTH, 64, 62, OPAQUE_TEXT);
+
+    // ---------------------------------------------------------
+    // choices
+    // ---------------------------------------------------------
+    Graphics_drawStringCentered(context, (int8_t *)"YES",
+                                AUTO_STRING_LENGTH, yes_x, choice_y, OPAQUE_TEXT);
+
+    Graphics_drawStringCentered(context, (int8_t *)"NO",
+                                AUTO_STRING_LENGTH, no_x, choice_y, OPAQUE_TEXT);
+
+    // ---------------------------------------------------------
+    // underline active selection
+    // joystick will toggle this between yes and no
+    // ---------------------------------------------------------
+    if (selection == RESTART_YES) {
+        Graphics_drawLine(context, yes_x - 10, underline_y,
+                                   yes_x + 10, underline_y);
+    } else {
+        Graphics_drawLine(context, no_x - 8, underline_y,
+                                   no_x + 8, underline_y);
+    }
+
+    // ---------------------------------------------------------
+    // confirm instruction
+    // ---------------------------------------------------------
+    Graphics_drawStringCentered(context, (int8_t *)"S2:CONFIRM SELECTION",
+                                AUTO_STRING_LENGTH, 64, 112, OPAQUE_TEXT);
+
+    Graphics_flushBuffer(context);
+}
 void Initialize_Clock_System() {
   // DCO frequency = 16 MHz
   // MCLK = fDCO/1 = 16 MHz
@@ -280,4 +437,22 @@ void draw_direction_arrow(Graphics_Context *context, int x, int y, unsigned int 
     else if (dir == DIR_DOWN) {
         draw_big_down_arrow(context, x, y);
     }
+}
+void draw_big_checkmark(Graphics_Context *context, int x, int y)
+{
+    // left rising part
+    Graphics_drawLine(context, x - 10, y,     x - 2, y + 10);
+    Graphics_drawLine(context, x - 9,  y,     x - 1, y + 10);
+
+    // right longer part
+    Graphics_drawLine(context, x - 2, y + 10, x + 14, y - 12);
+    Graphics_drawLine(context, x - 1, y + 10, x + 15, y - 12);
+}
+void draw_big_x(Graphics_Context *context, int x, int y)
+{
+    Graphics_drawLine(context, x - 12, y - 12, x + 12, y + 12);
+    Graphics_drawLine(context, x - 11, y - 12, x + 13, y + 12);
+
+    Graphics_drawLine(context, x - 12, y + 12, x + 12, y - 12);
+    Graphics_drawLine(context, x - 11, y + 12, x + 13, y - 12);
 }
