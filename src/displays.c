@@ -28,6 +28,32 @@ void display_startup(Graphics_Context *context){
     Graphics_drawStringCentered(&g_sContext, "Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
 }
 
+void display_menu_state(Graphics_Context *context)
+{
+  //PLACE CLAMPS WHERE WE UPDATE STATE (ISR?)BELOW ARE THE CLAMPS FOR MENU_ROUNDS TO NOT GO OUT OF RANGE (1=20) 
+  //if (menu_rounds < 1) menu_rounds = 1;
+//if (menu_rounds > 20) menu_rounds = 20;
+    char buf[3];
+    Graphics_clearDisplay(context);
+    Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"TOTAL ROUNDS", AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"^", AUTO_STRING_LENGTH, 64, 65, OPAQUE_TEXT);
+
+    buf[0] = (menu_rounds / 10) + '0';
+    buf[1] = (menu_rounds % 10) + '0';
+    buf[2] = '\0';
+//FIXES SINGLE DIGITS TO NOT DISPLAY LEADING ZEROS
+    if (menu_rounds < 10) {
+        buf[0] = buf[1];
+        buf[1] = '\0';
+    }
+
+    Graphics_drawStringCentered(context, (int8_t *)buf, AUTO_STRING_LENGTH, 64, 70, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"v", AUTO_STRING_LENGTH, 64, 75, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"PRESS S2 TO CONFIRM", AUTO_STRING_LENGTH, 64, 110, OPAQUE_TEXT);
+    Graphics_flushBuffer(context);
+}
+
 void Initialize_Clock_System() {
   // DCO frequency = 16 MHz
   // MCLK = fDCO/1 = 16 MHz
