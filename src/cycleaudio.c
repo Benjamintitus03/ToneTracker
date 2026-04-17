@@ -52,26 +52,31 @@ void main(void) {
     __enable_interrupt();
 
     while (1) {
-        roll_notes();
-        Graphics_clearDisplay(&g_sContext);
-        Graphics_drawStringCentered(&g_sContext, "Listening...", AUTO_STRING_LENGTH, 64, 64, OPAQUE_TEXT);
+            roll_notes();
+            Graphics_clearDisplay(&g_sContext);
+            Graphics_drawStringCentered(&g_sContext, "Listen Closely", AUTO_STRING_LENGTH, 64, 64, OPAQUE_TEXT);
 
-        int i;
-        for (i = 0; i < 3; i++) {
-            TA0CCR0 = current_notes[i];
-            TA0CTL = TASSEL_2 | MC_1 | TACLR;
-            __delay_cycles(8000000); // 0.5s play
-            TA0CTL = MC_0;
-            P2OUT &= ~BIT7;
-            __delay_cycles(1600000); // Gap
+            int i;
+            for (i = 0; i < 3; i++) {
+                TA0CCR0 = current_notes[i];
+                TA0CTL = TASSEL_2 | MC_1 | TACLR;
+
+                // Tone duration: Increased to 1.0 second (16,000,000 cycles)
+                __delay_cycles(16000000);
+
+                TA0CTL = MC_0;        // Stop Tone
+                P2OUT &= ~BIT7;       // Ensure pin is low
+
+                // Gap between notes: Increased to 0.5 seconds (8,000,000 cycles)
+                __delay_cycles(8000000);
+            }
+
+            Graphics_clearDisplay(&g_sContext);
+            Graphics_drawStringCentered(&g_sContext, "Was it Up or Down?", AUTO_STRING_LENGTH, 64, 64, OPAQUE_TEXT);
+
+            // Long pause (3 seconds) to let user think before the next round
+            __delay_cycles(48000000);
         }
-
-        Graphics_clearDisplay(&g_sContext);
-        Graphics_drawStringCentered(&g_sContext, "Sequence Done!", AUTO_STRING_LENGTH, 64, 64, OPAQUE_TEXT);
-
-        // Brief pause before next round
-        __delay_cycles(32000000);
-    }
 }
 
 #pragma vector = TIMER0_A0_VECTOR
