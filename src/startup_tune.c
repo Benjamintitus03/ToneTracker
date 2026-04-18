@@ -38,19 +38,6 @@
 #define NOTE_Bb5   1073   // A#5 / Bb5
 #define NOTE_B5    1012
 
-/* ----- 6th octave ----- */
-#define NOTE_C6     956
-#define NOTE_Db6    901   // C#6 / Db6
-#define NOTE_D6     851
-#define NOTE_Eb6    803   // D#6 / Eb6
-#define NOTE_E6     758
-#define NOTE_F6     716
-#define NOTE_Fs6    676   // F#6 / Gb6
-#define NOTE_G6     638
-#define NOTE_A6     568
-#define NOTE_Bb6    536   // A#6 / Bb6
-#define NOTE_B6     506
-
 //enharmonic aliases
 #define NOTE_Cs5   NOTE_Db5
 #define NOTE_Ds5   NOTE_Eb5
@@ -61,6 +48,8 @@
 #define NOTE_Ds6   NOTE_Eb6
 #define NOTE_Gb6   NOTE_Fs6
 #define NOTE_As6   NOTE_Bb6
+
+#define NOTE_REST  0
 
 /* =========================================================
  * FUNCTION PROTOTYPES
@@ -183,25 +172,25 @@ void play_startup_song(void)
      * inspired by the kind of beamed run you showed.
      * ----------------------------------------------------- */
     const unsigned int melody[64] = {
-        NOTE_A6, NOTE_E5, NOTE_D5, NOTE_B4,
-        NOTE_A5, NOTE_F5, NOTE_E5, NOTE_C5,
-        NOTE_G5, NOTE_E5, NOTE_D5, NOTE_B4,
-        NOTE_A5, NOTE_F5, NOTE_E5, NOTE_C5,
+        NOTE_A5, NOTE_D5, NOTE_Bb4, NOTE_G4,
+        NOTE_G5, NOTE_D5, NOTE_B4, NOTE_G4,
+        NOTE_Fs5, NOTE_Db5, NOTE_B4, NOTE_G4,
+        NOTE_G5, NOTE_D5, NOTE_B4, NOTE_G4,
 
-        NOTE_B5, NOTE_G5, NOTE_E5, NOTE_D5,
-        NOTE_A5, NOTE_F5, NOTE_D5, NOTE_C5,
-        NOTE_G5, NOTE_E5, NOTE_D5, NOTE_B4,
-        NOTE_F5, NOTE_D5, NOTE_C5, NOTE_A4,
+        NOTE_G5, NOTE_C5, NOTE_A4, NOTE_F4,
+        NOTE_F5, NOTE_C5, NOTE_A4, NOTE_F4,
+        NOTE_E5, NOTE_C5, NOTE_A4, NOTE_F4,
+        NOTE_F5, NOTE_C5, NOTE_A4, NOTE_F4,
 
-        NOTE_G5, NOTE_E5, NOTE_D5, NOTE_B4,
-        NOTE_A5, NOTE_F5, NOTE_E5, NOTE_C5,
-        NOTE_G5, NOTE_E5, NOTE_D5, NOTE_B4,
-        NOTE_A5, NOTE_F5, NOTE_D5, NOTE_C5,
+        NOTE_F5, NOTE_Bb4, NOTE_G4, NOTE_E4,
+        NOTE_E5, NOTE_B4, NOTE_G4, NOTE_E4,
+        NOTE_Eb5, NOTE_Bb4, NOTE_G4, NOTE_E4,
+        NOTE_E5, NOTE_B4, NOTE_G4, NOTE_E4,
 
-        NOTE_B5, NOTE_G5, NOTE_E5, NOTE_D5,
-        NOTE_A5, NOTE_F5, NOTE_D5, NOTE_C5,
-        NOTE_G5, NOTE_E5, NOTE_D5, NOTE_B4,
-        NOTE_E5, NOTE_D5, NOTE_C5, NOTE_A4
+        NOTE_E5, NOTE_A4, NOTE_F4, NOTE_D4,
+        NOTE_D5, NOTE_A4, NOTE_F4, NOTE_D4,
+        NOTE_Db5, NOTE_A4, NOTE_F4, NOTE_D4,
+        NOTE_D5, NOTE_A4, NOTE_F4, NOTE_D4,
     };
 
     /* -----------------------------------------------------
