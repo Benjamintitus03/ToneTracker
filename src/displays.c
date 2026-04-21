@@ -12,7 +12,7 @@ void Initialize_Clock_System(void);
 void display_idle_state(Graphics_Context *context);
 void display_startup_state(Graphics_Context *context);
 void display_menu_state(Graphics_Context *context);
-void display_sequence_state(Graphics_Context *context, unsigned int current_round)
+void display_sequence_state(Graphics_Context *context, unsigned int current_round);
 void display_compare_state(Graphics_Context *context,
                            unsigned int slot1,
                            unsigned int slot2,
