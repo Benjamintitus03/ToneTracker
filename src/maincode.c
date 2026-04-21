@@ -38,10 +38,10 @@ void setup_hardware(void) {
 
     P2DIR |= BIT7; // Buzzer
 
-    // S1 Button
-    P1DIR &= ~BIT1;
-    P1REN |= BIT1;
-    P1OUT |= BIT1;
+    // S1 (P1.1) and S2 (P1.2) Buttons
+    P1DIR &= ~(BIT1 | BIT2);
+    P1REN |= (BIT1 | BIT2);
+    P1OUT |= (BIT1 | BIT2);
 
     // Joystick Y axis on P8.2 (Channel A10)
     P8SEL0 |= BIT2;
@@ -72,7 +72,7 @@ void roll_notes(void) {
 }
 
 // Main System Loop
-                              void main(void) {
+void main(void) {
     Init_Master_Clock();
     setup_hardware();
 
@@ -96,10 +96,11 @@ void roll_notes(void) {
             case STATE_IDLE:
                 display_idle_state(&g_sContext);
 
-                // Wait for user to press S1
+                // Wait for S1 to start
                 if (!(P1IN & BIT1)) {
                     current_state = STATE_MENU;
-                    __delay_cycles(2000000); // Debounce delay
+                    while(!(P1IN & BIT1)); // Wait for release
+                    __delay_cycles(100000);
                 }
                 break;
 
@@ -115,12 +116,14 @@ void roll_notes(void) {
                     Graphics_drawStringCentered(&g_sContext, (int8_t *)"TONE TRACKER", AUTO_STRING_LENGTH, 64, 30, OPAQUE_TEXT);
                     Graphics_drawStringCentered(&g_sContext, (int8_t *)"Joy Up: 10 | Down: 5", AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
                     Graphics_drawStringCentered(&g_sContext, (int8_t *)round_msg, AUTO_STRING_LENGTH, 64, 70, OPAQUE_TEXT);
-                    Graphics_drawStringCentered(&g_sContext, (int8_t *)"Press S1 to Start", AUTO_STRING_LENGTH, 64, 100, OPAQUE_TEXT);
+                    Graphics_drawStringCentered(&g_sContext, (int8_t *)"Press S2 to Confirm", AUTO_STRING_LENGTH, 64, 100, OPAQUE_TEXT);
 
-                    if (!(P1IN & BIT1)) {
+                    // Wait for S2 to Confirm Menu
+                    if (!(P1IN & BIT2)) {
                         score = 0;
                         current_state = STATE_TRACKING;
-                        __delay_cycles(2000000);
+                        while(!(P1IN & BIT2)); // Wait for release
+                        __delay_cycles(100000);
                     }
                 }
                 break;
@@ -131,57 +134,85 @@ void roll_notes(void) {
                     for (r = 1; r <= total_rounds; r++) {
                         roll_notes();
 
-                        // 1. NATALIA'S SEQUENCE SCREEN
+                        // 1. PLAY SEQUENCE
                         display_sequence_state(&g_sContext, r);
 
-                        // 2. PLAY NOTES (Timer bug completely fixed)
                         int i;
                         for (i = 0; i < 3; i++) {
                             TA0CCR0 = (current_notes[i] * 16) - 1;
-
-                            // Must restore TASSEL_2 clock source every time!
                             TA0CTL = TASSEL_2 | MC_1 | TACLR;
                             __delay_cycles(16000000);
-
-                            TA0CTL = MC_0;  // Stop timer
-                            P2OUT &= ~BIT7; // Pull buzzer low
+                            TA0CTL = MC_0;
+                            P2OUT &= ~BIT7;
                             __delay_cycles(8000000);
                         }
 
-                        // 3. NATALIA'S COMPARE SCREEN (2 = DIR_NONE for empty slots)
-                        display_compare_state(&g_sContext, 2, 2, 2, r);
+                        // 2. INPUT COLLECTION PHASE (2 = DIR_NONE)
+                        int slot1 = 2;
+                        int slot2 = 2;
+                        int preview = 2;
 
-                        // Joystick Safety lock
-                        while (read_joystick() > 3200 || read_joystick() < 800);
+                        display_compare_state(&g_sContext, slot1, slot2, preview, r);
 
-                        int user_answer = 0;
-                        int user_dir = 2;
+                        while(slot1 == 2 || slot2 == 2) {
+                            int joy = read_joystick();
+                            int current_preview = preview;
 
-                        // Your Joystick Logic
-                        while(user_answer == 0) {
-                            int move = read_joystick();
-                            if (move > 3200) {
-                                user_answer = 1;
-                                user_dir = 1; // 1 = DIR_UP
+                            // Read Joystick for preview direction
+                            if (joy > 3200) current_preview = 1;      // UP
+                            else if (joy < 800) current_preview = 0;  // DOWN
+
+                            int redraw = 0;
+                            if (current_preview != preview) {
+                                preview = current_preview;
+                                redraw = 1;
                             }
-                            else if (move < 800) {
-                                user_answer = 2;
-                                user_dir = 0; // 0 = DIR_DOWN
+
+                            // CHECK S2: CONFIRM SELECTION
+                            if (!(P1IN & BIT2)) {
+                                if (preview != 2) { // Only confirm if they actually picked a direction
+                                    if (slot1 == 2) {
+                                        slot1 = preview;
+                                        preview = 2; // Reset preview for the next slot
+                                    } else if (slot2 == 2) {
+                                        slot2 = preview;
+                                    }
+                                    redraw = 1;
+                                    while(!(P1IN & BIT2)); // Wait for release so it doesn't double-click
+                                    __delay_cycles(100000);
+                                }
+                            }
+
+                            // CHECK S1: CLEAR SELECTION
+                            if (!(P1IN & BIT1)) {
+                                if (slot2 != 2) {
+                                    slot2 = 2; // Clear slot 2 first
+                                } else if (slot1 != 2) {
+                                    slot1 = 2; // Clear slot 1
+                                }
+                                preview = 2;
+                                redraw = 1;
+                                while(!(P1IN & BIT1)); // Wait for release
+                                __delay_cycles(100000);
+                            }
+
+                            // Update screen only if something changed
+                            if (redraw) {
+                                display_compare_state(&g_sContext, slot1, slot2, preview, r);
                             }
                         }
 
-                        // Draw the arrow you just picked!
-                        display_compare_state(&g_sContext, user_dir, 2, 2, r);
-                        __delay_cycles(8000000); // 0.5s pause to see arrow
+                        __delay_cycles(4000000); // Tiny pause to see the final arrow
 
-                        int actually_higher = (current_notes[2] < current_notes[0]) ? 1 : 2;
+                        // 3. CHECK ANSWERS (Smaller array number = higher frequency pitch)
+                        int actual_slot1 = (current_notes[1] < current_notes[0]) ? 1 : 0;
+                        int actual_slot2 = (current_notes[2] < current_notes[1]) ? 1 : 0;
 
-                        // 4. NATALIA'S FEEDBACK SCREEN
-                        if (user_answer == actually_higher) {
+                        if (slot1 == actual_slot1 && slot2 == actual_slot2) {
                             score++;
-                            display_round_feedback_state(&g_sContext, 1); // 1 = Correct Checkmark
+                            display_round_feedback_state(&g_sContext, 1); // Correct Checkmark
                         } else {
-                            display_round_feedback_state(&g_sContext, 0); // 0 = Wrong X
+                            display_round_feedback_state(&g_sContext, 0); // Wrong X
                         }
                         __delay_cycles(16000000);
                     }
@@ -190,13 +221,13 @@ void roll_notes(void) {
                 break;
 
             case STATE_GAMEOVER:
-                // 5. NATALIA'S FINAL SCORE SCREEN
                 display_final_score_state(&g_sContext, score, total_rounds);
 
                 // Wait for S1 to Restart
                 if (!(P1IN & BIT1)) {
                     current_state = STATE_STARTUP;
-                    __delay_cycles(2000000);
+                    while(!(P1IN & BIT1));
+                    __delay_cycles(100000);
                 }
                 break;
         }
