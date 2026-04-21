@@ -1,3 +1,8 @@
+#include <msp430fr6989.h>
+#include <stdint.h>
+#include <stdio.h>
+#include "Grlib/grlib/grlib.h"
+
 #define DIR_UP   1
 #define DIR_DOWN 0
 #define DIR_NONE 2
@@ -6,13 +11,14 @@
 #define RESTART_YES 0
 #define RESTART_NO  1
 
-Graphics_Context g_sContext;        // Declare a graphic library context GLOBALLY
-//prototypes
-void Initialize_Clock_System(void);
+// Declare a graphic library context GLOBALLY
+extern Graphics_Context g_sContext;        
+
+// prototypes
 void display_idle_state(Graphics_Context *context);
 void display_startup_state(Graphics_Context *context);
 void display_menu_state(Graphics_Context *context);
-void display_sequence_state(Graphics_Context *context, unsigned int current_round)
+void display_sequence_state(Graphics_Context *context, unsigned int round_num); // Fixed missing semicolon
 void display_compare_state(Graphics_Context *context,
                            unsigned int slot1,
                            unsigned int slot2,
@@ -23,64 +29,55 @@ void display_final_score_state(Graphics_Context *context,
                                unsigned int score,
                                unsigned int total_rounds);
 void display_confirm_restart_state(Graphics_Context *context, unsigned int selection);
-//DESIGNS
+
+// DESIGNS
 void draw_big_checkmark(Graphics_Context *context, int x, int y);
 void draw_big_x(Graphics_Context *context, int x, int y);
 void draw_music_note(Graphics_Context *context, int x, int y);
 void draw_direction_arrow(Graphics_Context *context, int x, int y, unsigned int dir);
 void draw_big_down_arrow(Graphics_Context *context, int x, int y);
 void draw_big_up_arrow(Graphics_Context *context, int x, int y);
-volatile unsigned int total_rounds;      // rounds chosen in menu state, 1-20
-volatile unsigned int current_round = 1;     // current round
 
-//MENU STATE
-volatile system_state_t current_state = STATE_WELCOME;
+// Cleaned up variable declarations
 volatile unsigned int menu_rounds = 1;
-volatile unsigned char menu_needs_redraw = 1;
-volatile unsigned int total_rounds;      // rounds chosen in menu state, 1-20
-volatile unsigned int current_round = 1;     // current round
 
-//WELCOME SCREEN AKA IDLE STATE
+// WELCOME SCREEN AKA IDLE STATE
 void display_idle_state(Graphics_Context *context){
-  Graphics_clearDisplay(context);
+    Graphics_clearDisplay(context);
     // Set background and foreground colors
-    Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
-    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_PINK);
+    Graphics_setBackgroundColor(context, GRAPHICS_COLOR_BLACK);
+    Graphics_setForegroundColor(context, GRAPHICS_COLOR_WHITE);
 
     // Set the default font for strings
-    GrContextFontSet(&g_sContext, &g_sFontFixed6x8);
+    GrContextFontSet(context, &g_sFontFixed6x8);
     // Print message
-    Graphics_drawStringCentered(&g_sContext, "Tone Tracker", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
-    Graphics_drawStringCentered(&g_sContext, "Made By:", AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
-    Graphics_drawStringCentered(&g_sContext, "Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
-    Graphics_drawStringCentered(&g_sContext, "PRESS S1 TO PLAY", AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"Tone Tracker", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"Made By:", AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"PRESS S1 TO PLAY", AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
 }
+
 // MUSIC PLAYS FOR 5 SECONDS IN THIS STATE
 void display_startup_state(Graphics_Context *context){
-  Graphics_clearDisplay(context);
+    Graphics_clearDisplay(context);
     // Set background and foreground colors
-    Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
-    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_PINK);
+    Graphics_setBackgroundColor(context, GRAPHICS_COLOR_BLACK);
+    Graphics_setForegroundColor(context, GRAPHICS_COLOR_WHITE);
 
     // Set the default font for strings
-    GrContextFontSet(&g_sContext, &g_sFontFixed6x8);
+    GrContextFontSet(context, &g_sFontFixed6x8);
     // Print message
-    Graphics_drawStringCentered(&g_sContext, "Tone Tracker", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
-    Graphics_drawStringCentered(&g_sContext, "Made By:", AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
-    Graphics_drawStringCentered(&g_sContext, "Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"Tone Tracker", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"Made By:", AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
+    Graphics_drawStringCentered(context, (int8_t *)"Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
 }
 
 void display_menu_state(Graphics_Context *context)
 {
-  //PLACE CLAMPS WHERE WE UPDATE STATE (ISR?)BELOW ARE THE CLAMPS FOR MENU_ROUNDS TO NOT GO OUT OF RANGE (1=20)
-  //if (menu_rounds < 1) menu_rounds = 1;
-//if (menu_rounds > 20) menu_rounds = 20;
     char buf[3];
     Graphics_clearDisplay(context);
     Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
     Graphics_drawStringCentered(context, (int8_t *)"TOTAL ROUNDS", AUTO_STRING_LENGTH, 64, 40, OPAQUE_TEXT);
-
-
 
     // Up arrow
     Graphics_drawLine(context, 64, 60, 60, 66);
@@ -89,7 +86,7 @@ void display_menu_state(Graphics_Context *context)
     buf[0] = (menu_rounds / 10) + '0';
     buf[1] = (menu_rounds % 10) + '0';
     buf[2] = '\0';
-//FIXES SINGLE DIGITS TO NOT DISPLAY LEADING ZEROS
+    // FIXES SINGLE DIGITS TO NOT DISPLAY LEADING ZEROS
     if (menu_rounds < 10) {
         buf[0] = buf[1];
         buf[1] = '\0';
@@ -105,6 +102,7 @@ void display_menu_state(Graphics_Context *context)
     Graphics_drawStringCentered(context, (int8_t *)"PRESS S2 TO CONFIRM", AUTO_STRING_LENGTH, 64, 110, OPAQUE_TEXT);
     Graphics_flushBuffer(context);
 }
+
 void display_sequence_state(Graphics_Context *context, unsigned int round_num)
 {
     char buf[3];
@@ -117,7 +115,7 @@ void display_sequence_state(Graphics_Context *context, unsigned int round_num)
     Graphics_drawStringCentered(context, (int8_t *)"LISTEN CLOSELY!",
                                 AUTO_STRING_LENGTH, 64, 40, OPAQUE_TEXT);
 
-    //MUSIC NOTES:)
+    // MUSIC NOTES:)
     draw_music_note(context, 34, 65);
     draw_music_note(context, 64, 65);
     draw_music_note(context, 94, 65);
@@ -182,17 +180,13 @@ void display_compare_state(Graphics_Context *context,
     Graphics_drawStringCentered(context, (int8_t *)"COMPARE NOTES!",
                                 AUTO_STRING_LENGTH, 64, 35, OPAQUE_TEXT);
     // draw slot 1
-    // if slot1 already has a confirmed direction, draw that
-    // otherwise draw the current preview direction there
     if (slot1 != DIR_NONE) {
         draw_direction_arrow(context, slot1_x, arrow_y, slot1);
     } else {
         draw_direction_arrow(context, slot1_x, arrow_y, preview_dir);
     }
+    
     // draw slot 2
-    // only draw something in slot 2 once slot1 is already chosen
-    // if slot2 is confirmed, draw that
-    // if slot2 is not confirmed yet but slot1 is done, draw preview
     if (slot1 != DIR_NONE) {
         if (slot2 != DIR_NONE) {
             draw_direction_arrow(context, slot2_x, arrow_y, slot2);
@@ -202,8 +196,6 @@ void display_compare_state(Graphics_Context *context,
     }
 
     // underline logic
-    // if slot1 is still empty, underline slot1 a little higher
-    // once slot1 is selected, move to slot2 and drop underline lower
     if (slot1 == DIR_NONE) {
         Graphics_drawLine(context, slot1_x - 8, underline_y_high,
                                    slot1_x + 8, underline_y_high);
@@ -211,13 +203,12 @@ void display_compare_state(Graphics_Context *context,
         Graphics_drawLine(context, slot2_x - 8, underline_y_low,
                                    slot2_x + 8, underline_y_low);
     }
+    
     // round number display
-    // converts 1-20 into a string without snprintf
     buf[0] = (round_num / 10) + '0';
     buf[1] = (round_num % 10) + '0';
     buf[2] = '\0';
 
-    // for 1-9, remove the leading zero
     if (round_num < 10) {
         buf[0] = buf[1];
         buf[1] = '\0';
@@ -238,47 +229,47 @@ void display_compare_state(Graphics_Context *context,
 
     Graphics_flushBuffer(context);
 }
+
 void display_round_feedback_state(Graphics_Context *context, unsigned int result){
     Graphics_clearDisplay(context);
 
-        // title
-        Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
-                                    AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+    // title
+    Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
+                                AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
 
-        // 3 centered music notes under title
-        draw_music_note(context, 42, 32);
-        draw_music_note(context, 64, 32);
-        draw_music_note(context, 86, 32);
+    // 3 centered music notes under title
+    draw_music_note(context, 42, 32);
+    draw_music_note(context, 64, 32);
+    draw_music_note(context, 86, 32);
 
-        // big result symbol in middle
-        if (result == RESULT_CORRECT) {
-            draw_big_checkmark(context, 64, 78);
-        } else {
-            draw_big_x(context, 64, 78);
-        }
+    // big result symbol in middle
+    if (result == RESULT_CORRECT) {
+        draw_big_checkmark(context, 64, 78);
+    } else {
+        draw_big_x(context, 64, 78);
+    }
 
-        Graphics_flushBuffer(context);
+    Graphics_flushBuffer(context);
 }
+
 void display_final_score_state(Graphics_Context *context,
                                unsigned int score,
                                unsigned int total_rounds)
 {
-    char buf[6]; // enough for "20/20"
+    char buf[6]; 
 
     Graphics_clearDisplay(context);
     // TITLE
     Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
                                 AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
-    // MUSIC NOTES (centered cluster)
+    // MUSIC NOTES
     draw_music_note(context, 44, 28);
     draw_music_note(context, 64, 28);
     draw_music_note(context, 84, 28);
     Graphics_drawStringCentered(context, (int8_t *)"YOU SCORED",
                                 AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
-    // SCORE FORMAT: x/ROUNDS
-    // build string manually (snprintf wasnt allowed:/)
 
-    // tens digit of score
+    // SCORE FORMAT
     if (score >= 10) {
         buf[0] = (score / 10) + '0';
         buf[1] = (score % 10) + '0';
@@ -296,14 +287,13 @@ void display_final_score_state(Graphics_Context *context,
 
     Graphics_drawStringCentered(context, (int8_t *)buf,
                                 AUTO_STRING_LENGTH, 64, 70, OPAQUE_TEXT);
-    // RESTART INSTRUCTION
-  //I dont want S1 TO GO TO CONFIRM_RESTART_sTATE it should auto go to idle or start up
 
     Graphics_drawStringCentered(context, (int8_t *)"Press S1 To Restart",
                                 AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
 
     Graphics_flushBuffer(context);
 }
+
 void display_confirm_restart_state(Graphics_Context *context, unsigned int selection)
 {
     int yes_x = 24;
@@ -326,17 +316,15 @@ void display_confirm_restart_state(Graphics_Context *context, unsigned int selec
 
     Graphics_drawStringCentered(context, (int8_t *)"Progress will be LOST",
                                 AUTO_STRING_LENGTH, 64, 62, OPAQUE_TEXT);
-    // choices
 
+    // choices
     Graphics_drawStringCentered(context, (int8_t *)"YES",
                                 AUTO_STRING_LENGTH, yes_x, choice_y, OPAQUE_TEXT);
 
     Graphics_drawStringCentered(context, (int8_t *)"NO",
                                 AUTO_STRING_LENGTH, no_x, choice_y, OPAQUE_TEXT);
 
-
     // underline active selection
-    // joystick will toggle this between yes and no
     if (selection == RESTART_YES) {
         Graphics_drawLine(context, yes_x - 10, underline_y,
                                    yes_x + 10, underline_y);
@@ -350,46 +338,23 @@ void display_confirm_restart_state(Graphics_Context *context, unsigned int selec
 
     Graphics_flushBuffer(context);
 }
-void Initialize_Clock_System() {
-  // DCO frequency = 16 MHz
-  // MCLK = fDCO/1 = 16 MHz
-  // SMCLK = fDCO/1 = 16 MHz
 
-  // Activate memory wait state
-  FRCTL0 = FRCTLPW | NWAITS_1;    // Wait state=1
-  CSCTL0 = CSKEY;
-  // Set DCOFSEL to 4 (3-bit field)
-  CSCTL1 &= ~DCOFSEL_7;
-  CSCTL1 |= DCOFSEL_4;
-  // Set DCORSEL to 1 (1-bit field)
-  CSCTL1 |= DCORSEL;
-  // Change the dividers to 0 (div by 1)
-  CSCTL3 &= ~(DIVS2|DIVS1|DIVS0);    // DIVS=0 (3-bit)
-  CSCTL3 &= ~(DIVM2|DIVM1|DIVM0);    // DIVM=0 (3-bit)
-  CSCTL0_H = 0;
 
-  return;
-}
 
 void draw_big_up_arrow(Graphics_Context *context, int x, int y)
 {
-    // shaft
     Graphics_drawLine(context, x, y, x, y + 18);
-
-    // arrow head
     Graphics_drawLine(context, x, y, x - 6, y + 6);
     Graphics_drawLine(context, x, y, x + 6, y + 6);
 }
 
 void draw_big_down_arrow(Graphics_Context *context, int x, int y)
 {
-    // shaft
     Graphics_drawLine(context, x, y, x, y - 18);
-
-    // arrow head
     Graphics_drawLine(context, x, y, x - 6, y - 6);
     Graphics_drawLine(context, x, y, x + 6, y - 6);
 }
+
 void draw_direction_arrow(Graphics_Context *context, int x, int y, unsigned int dir)
 {
     if (dir == DIR_UP) {
@@ -399,21 +364,19 @@ void draw_direction_arrow(Graphics_Context *context, int x, int y, unsigned int 
         draw_big_down_arrow(context, x, y);
     }
 }
+
 void draw_big_checkmark(Graphics_Context *context, int x, int y)
 {
-    // left rising part
     Graphics_drawLine(context, x - 10, y,     x - 2, y + 10);
     Graphics_drawLine(context, x - 9,  y,     x - 1, y + 10);
-
-    // right longer part
     Graphics_drawLine(context, x - 2, y + 10, x + 14, y - 12);
     Graphics_drawLine(context, x - 1, y + 10, x + 15, y - 12);
 }
+
 void draw_big_x(Graphics_Context *context, int x, int y)
 {
     Graphics_drawLine(context, x - 12, y - 12, x + 12, y + 12);
     Graphics_drawLine(context, x - 11, y - 12, x + 13, y + 12);
-
     Graphics_drawLine(context, x - 12, y + 12, x + 12, y - 12);
     Graphics_drawLine(context, x - 11, y + 12, x + 13, y - 12);
 }
