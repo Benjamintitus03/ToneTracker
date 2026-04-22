@@ -2,6 +2,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "Grlib/grlib/grlib.h"
+typedef enum {
+    DIR_NONE = 0,
+    DIR_UP,
+    DIR_DOWN,
+    DIR_LEFT,
+    DIR_RIGHT
+} direction_t;
 
 #define DIR_UP   1
 #define DIR_DOWN 0
@@ -163,16 +170,9 @@ void display_compare_state(Graphics_Context *context,
 {
     char buf[3];
 
-    // x positions for the two compare slots
     int slot1_x = 44;
     int slot2_x = 84;
-
-    // y position for the arrows
-    int arrow_y = 68;
-
-    // underline heights
-    int underline_y_high = 86;   // still picking first arrow
-    int underline_y_low  = 92;   // first arrow locked in, now picking second
+    int arrow_y = 70;
 
     Graphics_clearDisplay(context);
 
@@ -183,14 +183,15 @@ void display_compare_state(Graphics_Context *context,
     // screen label
     Graphics_drawStringCentered(context, (int8_t *)"COMPARE NOTES!",
                                 AUTO_STRING_LENGTH, 64, 35, OPAQUE_TEXT);
-    // draw slot 1
+
+    // slot 1
     if (slot1 != DIR_NONE) {
         draw_direction_arrow(context, slot1_x, arrow_y, slot1);
     } else {
         draw_direction_arrow(context, slot1_x, arrow_y, preview_dir);
     }
-    
-    // draw slot 2
+
+    // slot 2
     if (slot1 != DIR_NONE) {
         if (slot2 != DIR_NONE) {
             draw_direction_arrow(context, slot2_x, arrow_y, slot2);
@@ -199,15 +200,6 @@ void display_compare_state(Graphics_Context *context,
         }
     }
 
-    // underline logic
-    if (slot1 == DIR_NONE) {
-        Graphics_drawLine(context, slot1_x - 8, underline_y_high,
-                                   slot1_x + 8, underline_y_high);
-    } else if (slot2 == DIR_NONE) {
-        Graphics_drawLine(context, slot2_x - 8, underline_y_low,
-                                   slot2_x + 8, underline_y_low);
-    }
-    
     // round number display
     buf[0] = (round_num / 10) + '0';
     buf[1] = (round_num % 10) + '0';
@@ -233,7 +225,27 @@ void display_compare_state(Graphics_Context *context,
 
     Graphics_flushBuffer(context);
 }
+void display_round_feedback_state(Graphics_Context *context, unsigned int result){
+    Graphics_clearDisplay(context);
 
+        // title
+        Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
+                                    AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+
+        // 3 centered music notes under title
+        draw_music_note(context, 42, 32);
+        draw_music_note(context, 64, 32);
+        draw_music_note(context, 86, 32);
+
+        // big result symbol in middle
+        if (result == RESULT_CORRECT) {
+            draw_big_checkmark(context, 64, 78);
+        } else {
+            draw_big_x(context, 64, 78);
+        }
+
+        Graphics_flushBuffer(context);
+}
 void display_round_feedback_state(Graphics_Context *context, unsigned int result){
     Graphics_clearDisplay(context);
 
@@ -361,11 +373,33 @@ void draw_big_down_arrow(Graphics_Context *context, int x, int y)
 
 void draw_direction_arrow(Graphics_Context *context, int x, int y, unsigned int dir)
 {
-    if (dir == DIR_UP) {
-        draw_big_up_arrow(context, x, y);
-    }
-    else if (dir == DIR_DOWN) {
-        draw_big_down_arrow(context, x, y);
+    switch (dir) {
+    case DIR_UP:
+        Graphics_drawLine(context, x, y - 6, x, y + 6);
+        Graphics_drawLine(context, x, y - 6, x - 4, y - 2);
+        Graphics_drawLine(context, x, y - 6, x + 4, y - 2);
+        break;
+
+    case DIR_DOWN:
+        Graphics_drawLine(context, x, y - 6, x, y + 6);
+        Graphics_drawLine(context, x, y + 6, x - 4, y + 2);
+        Graphics_drawLine(context, x, y + 6, x + 4, y + 2);
+        break;
+
+    case DIR_LEFT:
+        Graphics_drawLine(context, x - 6, y, x + 6, y);
+        Graphics_drawLine(context, x - 6, y, x - 2, y - 4);
+        Graphics_drawLine(context, x - 6, y, x - 2, y + 4);
+        break;
+
+    case DIR_RIGHT:
+        Graphics_drawLine(context, x - 6, y, x + 6, y);
+        Graphics_drawLine(context, x + 6, y, x + 2, y - 4);
+        Graphics_drawLine(context, x + 6, y, x + 2, y + 4);
+        break;
+
+    default:
+        break;
     }
 }
 
