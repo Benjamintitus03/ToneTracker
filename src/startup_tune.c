@@ -1,18 +1,15 @@
 //IN PROGRESS
 #include <msp430.h>
 
-/* =========================================================
+/* 
  * TONE TRACKER STARTUP SONG
  * Passive buzzer on P2.7 using TimerA0 interrupt toggle
  * SMCLK assumed ~1 MHz
- * ========================================================= */
-
-/* =========================================================
  * 1 MHz SMCLK NOTE PERIOD TICKS
  * higher octave set + accidentals
  * smaller number = higher pitch
- * ========================================================= */
-/* ===================== 4th OCTAVE ===================== */
+ */
+/* -------4th OCTAVE -------*/
 #define NOTE_C4    3822
 #define NOTE_Db4   3608
 #define NOTE_D4    3405
