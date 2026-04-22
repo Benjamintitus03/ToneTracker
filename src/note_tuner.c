@@ -1,15 +1,15 @@
 #include <msp430.h>
 
-/* =========================================================
+/* 
  * BUZZER NOTE TESTER
  * Passive buzzer on P2.7 using TimerA0 interrupt toggle
  * SMCLK assumed ~1 MHz
  *
  * Change TEST_NOTE to whatever note you want to hear.
  * Total repeat period = 5 seconds
- * ========================================================= */
+ */
 
-/* ===================== 4th OCTAVE ===================== */
+/*  4th OCTAVE */
 #define NOTE_C4    3822
 #define NOTE_Db4   3608
 
@@ -22,7 +22,7 @@
 #define NOTE_Bb4   2145
 #define NOTE_B4    2025
 
-/* ===================== 5th OCTAVE ===================== */
+/* 5th OCTAVE */
 #define NOTE_C5    1911
 #define NOTE_Db5   1802
 
@@ -52,29 +52,28 @@
 
 #define NOTE_REST  0
 
-/* =========================================================
+/* 
  * EDIT THIS NOTE
- * ========================================================= */
+ * */
 #define TEST_NOTE NOTE_D4
 
-/* =========================================================
+/* 
  * TIMING
- * ========================================================= */
+ */
 #define NOTE_ON_TIME_CYCLES   1000000UL   /* ~1.0 s */
 #define TOTAL_PERIOD_CYCLES  5000000UL    /* 5.0 s total */
 #define NOTE_OFF_TIME_CYCLES (TOTAL_PERIOD_CYCLES - NOTE_ON_TIME_CYCLES)
 
-/* =========================================================
+/*
  * FUNCTION PROTOTYPES
- * ========================================================= */
+ */
 void setup_buzzer(void);
 void play_note(unsigned int period_ticks);
 void stop_buzzer(void);
 void delay_cycles_variable(unsigned long cycles);
 
-/* =========================================================
- * MAIN
- * ========================================================= */
+// MAIN
+
 void main(void)
 {
     WDTCTL = WDTPW | WDTHOLD;
@@ -93,9 +92,8 @@ void main(void)
     }
 }
 
-/* =========================================================
- * BUZZER SETUP
- * ========================================================= */
+// BUZZER SETUP
+
 void setup_buzzer(void)
 {
     P2DIR |= BIT7;
@@ -105,9 +103,7 @@ void setup_buzzer(void)
     TA0CCTL0 = CCIE;                    /* enable CCR0 interrupt */
 }
 
-/* =========================================================
- * PLAY NOTE
- * ========================================================= */
+//PLAY NOTE
 void play_note(unsigned int period_ticks)
 {
     if (period_ticks == NOTE_REST)
@@ -120,18 +116,15 @@ void play_note(unsigned int period_ticks)
     TA0CTL = TASSEL_2 | MC_1 | TACLR;   /* SMCLK, up mode */
 }
 
-/* =========================================================
- * STOP BUZZER
- * ========================================================= */
+//STOP BUZZER
 void stop_buzzer(void)
 {
     TA0CTL = MC_0;
     P2OUT &= ~BIT7;
 }
 
-/* =========================================================
- * VARIABLE DELAY
- * ========================================================= */
+//VARIABLE DELAY
+
 void delay_cycles_variable(unsigned long cycles)
 {
     while (cycles >= 10000UL)
@@ -147,9 +140,7 @@ void delay_cycles_variable(unsigned long cycles)
     }
 }
 
-/* =========================================================
- * TIMER ISR
- * ========================================================= */
+// TIMER ISR
 #pragma vector = TIMER0_A0_VECTOR
 __interrupt void Buzzer_ISR(void)
 {
