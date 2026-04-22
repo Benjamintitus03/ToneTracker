@@ -55,6 +55,7 @@ void display_idle_state(Graphics_Context *context){
     Graphics_drawStringCentered(context, (int8_t *)"Made By:", AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
     Graphics_drawStringCentered(context, (int8_t *)"Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
     Graphics_drawStringCentered(context, (int8_t *)"PRESS S1 TO PLAY", AUTO_STRING_LENGTH, 64, 50, OPAQUE_TEXT);
+  Graphics_flushBuffer(context);
 }
 
 // MUSIC PLAYS FOR 5 SECONDS IN THIS STATE
@@ -70,6 +71,7 @@ void display_startup_state(Graphics_Context *context){
     Graphics_drawStringCentered(context, (int8_t *)"Tone Tracker", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
     Graphics_drawStringCentered(context, (int8_t *)"Made By:", AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
     Graphics_drawStringCentered(context, (int8_t *)"Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
+  Graphics_flushBuffer(context);
 }
 
 void display_menu_state(Graphics_Context *context)
