@@ -60,19 +60,21 @@ void display_idle_state(Graphics_Context *context){
 
 // MUSIC PLAYS FOR 5 SECONDS IN THIS STATE
 void display_startup_state(Graphics_Context *context){
-    Graphics_clearDisplay(context);
+  Graphics_clearDisplay(context);
     // Set background and foreground colors
-    Graphics_setBackgroundColor(context, GRAPHICS_COLOR_BLACK);
-    Graphics_setForegroundColor(context, GRAPHICS_COLOR_WHITE);
+    Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_PINK);
+    //MUSIC NOTES:)
+    draw_music_note(context, 34, 65);
+    draw_music_note(context, 64, 65);
+    draw_music_note(context, 94, 65);
 
     // Set the default font for strings
-    GrContextFontSet(context, &g_sFontFixed6x8);
+    GrContextFontSet(&g_sContext, &g_sFontFixed6x8);
     // Print message
-    Graphics_drawStringCentered(context, (int8_t *)"Tone Tracker", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
-    Graphics_drawStringCentered(context, (int8_t *)"Made By:", AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
-    Graphics_drawStringCentered(context, (int8_t *)"Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
-  Graphics_flushBuffer(context);
-}
+    Graphics_drawStringCentered(&g_sContext, "Tone Tracker", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext, "Made By:", AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext, "Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
 
 void display_menu_state(Graphics_Context *context)
 {
