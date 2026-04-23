@@ -1,1 +1,5 @@
 This folder with contain all of our required header files.
+#include "msp430fr6989.h"
+#include "Grlib/grlib/grlib.h"          // Graphics library (grlib)
+#include "LcdDriver/lcd_driver.h"       // LCD driver
+#include <stdio.h>
