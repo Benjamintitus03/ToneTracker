@@ -1,3 +1,4 @@
 # ToneTracker
 Embedded Systems project for testing pitch and tones, as well as their variations.
-<img width="600" height="800" alt="1776133053624" src="https://github.com/user-attachments/assets/da31d97a-dd7e-4934-bf4a-7bb8c6dfe004" />
+<img width="1039" height="1402" alt="image" src="https://github.com/user-attachments/assets/9f1e0101-c062-410d-8205-727c5af2430f" />
+
