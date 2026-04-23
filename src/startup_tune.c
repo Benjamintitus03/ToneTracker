@@ -1,8 +1,7 @@
 //IN PROGRESS
 #include <msp430.h>
 
-/* 
- * TONE TRACKER STARTUP SONG
+/* * TONE TRACKER STARTUP SONG
  * Passive buzzer on P2.7 using TimerA0 interrupt toggle
  * SMCLK assumed ~1 MHz
  * 1 MHz SMCLK NOTE PERIOD TICKS
@@ -57,28 +56,7 @@ void stop_buzzer(void);
 void delay_cycles_variable(unsigned long cycles);
 void play_startup_song(void);
 
-// MAIN
-void main(void)
-{
-    WDTCTL = WDTPW | WDTHOLD;
-    PM5CTL0 &= ~LOCKLPM5;
-
-    setup_buzzer();
-    __enable_interrupt();
-
- /*
-     * PLAY SONG ON STARTUP
-*/
-    play_startup_song();
-
-    while (1)
-    {
-        /* idle here for now */
-    }
-}
-
-/* 
- * BUZZER SETUP
+/* * BUZZER SETUP
  * Passive buzzer on P2.7
 */
 void setup_buzzer(void)
@@ -96,8 +74,7 @@ void setup_buzzer(void)
     TA0CCTL0 = CCIE;
 }
 
-/* 
- * PLAY ONE NOTE
+/* * PLAY ONE NOTE
  * period_ticks controls pitch
  */
 void play_note(unsigned int period_ticks)
@@ -108,7 +85,7 @@ void play_note(unsigned int period_ticks)
         return;
     }
 
-    TA0CCR0 = period_ticks - 1;
+    TA0CCR0 = (period_ticks * 16) - 1;
     TA0CTL = TASSEL_2 | MC_1 | TACLR;   /* SMCLK, up mode */
 }
 
@@ -156,8 +133,7 @@ void play_startup_song(void)
 {
     unsigned int i;
 
-    /* 
-     * EDIT HERE: SONG NOTES
+    /* * EDIT HERE: SONG NOTES
      * This is a buzzer rolling melody
      */
     const unsigned int melody[64] = {
@@ -182,8 +158,7 @@ void play_startup_song(void)
         NOTE_D5, NOTE_A4, NOTE_F4, NOTE_D4,
     };
 
-    /* 
-     *NOTE TIMING
+    /* *NOTE TIMING
      *
      * These values are chosen to land around ~10 seconds total
      * for startup guidelines
@@ -191,9 +166,9 @@ void play_startup_song(void)
      * note_gap      = tiny gap between notes
      * group_break   = slightly longer gap after every 4th note
      */
-    const unsigned long note_duration = 120000UL;  /* ~0.12 s */
-    const unsigned long note_gap      = 10000UL;   /* ~0.01 s */
-    const unsigned long group_break   = 40000UL;   /* ~0.04 s */
+    const unsigned long note_duration = 1920000UL;  /* ~0.12 s */
+    const unsigned long note_gap      = 160000UL;   /* ~0.01 s */
+    const unsigned long group_break   = 640000UL;   /* ~0.04 s */
 
     for (i = 0; i < 64; i++)
     {
@@ -212,14 +187,4 @@ void play_startup_song(void)
             delay_cycles_variable(note_gap);
         }
     }
-}
-
-/* 
- * TIMER0_A0 ISR
- * toggles buzzer pin to generate square wave
- */
-#pragma vector = TIMER0_A0_VECTOR
-__interrupt void Buzzer_ISR(void)
-{
-    P2OUT ^= BIT7;
 }

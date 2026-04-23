@@ -82,6 +82,7 @@ void display_startup_state(Graphics_Context *context){
     Graphics_drawStringCentered(&g_sContext, "Tone Tracker", AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
     Graphics_drawStringCentered(&g_sContext, "Made By:", AUTO_STRING_LENGTH, 64, 105, OPAQUE_TEXT);
     Graphics_drawStringCentered(&g_sContext, "Natalia & Benjamin", AUTO_STRING_LENGTH, 64, 120, OPAQUE_TEXT);
+} // Added missing brace
 
 void display_menu_state(Graphics_Context *context)
 {
@@ -183,15 +184,14 @@ void display_compare_state(Graphics_Context *context,
     // screen label
     Graphics_drawStringCentered(context, (int8_t *)"COMPARE NOTES!",
                                 AUTO_STRING_LENGTH, 64, 35, OPAQUE_TEXT);
-
-    // slot 1
+    // draw slot 1
     if (slot1 != DIR_NONE) {
         draw_direction_arrow(context, slot1_x, arrow_y, slot1);
     } else {
         draw_direction_arrow(context, slot1_x, arrow_y, preview_dir);
     }
-
-    // slot 2
+    
+    // draw slot 2
     if (slot1 != DIR_NONE) {
         if (slot2 != DIR_NONE) {
             draw_direction_arrow(context, slot2_x, arrow_y, slot2);
@@ -200,6 +200,15 @@ void display_compare_state(Graphics_Context *context,
         }
     }
 
+    // underline logic
+    if (slot1 == DIR_NONE) {
+        Graphics_drawLine(context, slot1_x - 8, 86,
+                                   slot1_x + 8, 86);
+    } else if (slot2 == DIR_NONE) {
+        Graphics_drawLine(context, slot2_x - 8, 92,
+                                   slot2_x + 8, 92);
+    }
+    
     // round number display
     buf[0] = (round_num / 10) + '0';
     buf[1] = (round_num % 10) + '0';
@@ -225,6 +234,7 @@ void display_compare_state(Graphics_Context *context,
 
     Graphics_flushBuffer(context);
 }
+
 void display_round_feedback_state(Graphics_Context *context, unsigned int result){
     Graphics_clearDisplay(context);
 
@@ -245,27 +255,6 @@ void display_round_feedback_state(Graphics_Context *context, unsigned int result
         }
 
         Graphics_flushBuffer(context);
-}
-void display_round_feedback_state(Graphics_Context *context, unsigned int result){
-    Graphics_clearDisplay(context);
-
-    // title
-    Graphics_drawStringCentered(context, (int8_t *)"TONE TRACKER",
-                                AUTO_STRING_LENGTH, 64, 10, OPAQUE_TEXT);
-
-    // 3 centered music notes under title
-    draw_music_note(context, 42, 32);
-    draw_music_note(context, 64, 32);
-    draw_music_note(context, 86, 32);
-
-    // big result symbol in middle
-    if (result == RESULT_CORRECT) {
-        draw_big_checkmark(context, 64, 78);
-    } else {
-        draw_big_x(context, 64, 78);
-    }
-
-    Graphics_flushBuffer(context);
 }
 
 void display_final_score_state(Graphics_Context *context,
